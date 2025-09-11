@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>自动化工程系学生会部门选择助手</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="/nimt-auto/https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    
+    <!-- 配置Tailwind自定义颜色和字体 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6',
+                        secondary: '#10B981',
+                        accent: '#F59E0B',
+                        publicity: '#EF4444',    // 文宣部-红色系
+                        external: '#8B5CF6',    // 外联部-紫色系
+                        academic: '#3B82F6',    // 学习部-蓝色系
+                        culture: '#10B981',     // 文体部-绿色系
+                        life: '#F59E0B',        // 生活部-橙色系
+                        neutral: '#64748B',
+                        light: '#F1F5F9',
+                        dark: '#1E293B',
+                        qq: '#12B7F5',
+                        wechat: '#07C160'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .card-shadow {
+                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            }
+            .progress-bar {
+                transition: width 0.5s ease-in-out;
+            }
+            .option-hover {
+                transition: all 0.3s ease;
+            }
+            .option-hover:hover {
+                transform: translateX(5px);
+            }
+            .btn-hover {
+                @apply transition-all duration-300 transform hover:scale-105 hover:shadow-lg;
+            }
+            .card-effect {
+                @apply transition-all duration-300 hover:shadow-xl;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen font-sans">
+    <div class="container mx-auto px-4 py-8 max-w-3xl">
+        <!-- 标题区域 -->
+        <header class="text-center mb-8">
+            <div class="inline-block p-3 bg-primary/10 rounded-full mb-4">
+                <i class="fa fa-graduation-cap text-3xl text-primary"></i>
+            </div>
+            <h1 class="text-[clamp(1.6rem,5vw,2.2rem)] font-bold text-dark mb-3">自动化工程系学生会</h1>
+            <p class="text-neutral text-lg">部门匹配助手 — 找到最适合你的部门</p>
+        </header>
+        
+        <!-- 主内容区 -->
+        <main class="bg-white rounded-2xl p-6 md:p-8 card-shadow mb-8">
+            <!-- 进度条 -->
+            <div class="mb-8">
+                <div class="flex justify-between text-sm text-neutral mb-2">
+                    <span>进度</span>
+                    <span id="progress-text">0/10</span>
+                </div>
+                <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div id="progress-bar" class="h-full bg-primary progress-bar w-0"></div>
+                </div>
+            </div>
+            
+            <!-- 开始页面 -->
+            <div id="start-screen" class="text-center py-6">
+                <h2 class="text-2xl font-bold mb-4">欢迎了解学生会</h2>
+                <p class="text-neutral mb-6 max-w-md mx-auto">
+                    我们设有5个部门，每个部门都有其独特的职能和魅力。通过简短的问答，我们将为你推荐最适合的部门，快来试试吧！
+                </p>
+                
+                <!-- 部门快速预览 -->
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-8">
+                    <div class="bg-publicity/10 text-publicity p-3 rounded-lg text-center text-sm">
+                        <i class="fa fa-camera mb-1"></i>
+                        <div>文宣部</div>
+                    </div>
+                    <div class="bg-external/10 text-external p-3 rounded-lg text-center text-sm">
+                        <i class="fa fa-handshake-o mb-1"></i>
+                        <div>外联部</div>
+                    </div>
+                    <div class="bg-academic/10 text-academic p-3 rounded-lg text-center text-sm">
+                        <i class="fa fa-book mb-1"></i>
+                        <div>学习部</div>
+                    </div>
+                    <div class="bg-culture/10 text-culture p-3 rounded-lg text-center text-sm">
+                        <i class="fa fa-futbol-o mb-1"></i>
+                        <div>文体部</div>
+                    </div>
+                    <div class="bg-life/10 text-life p-3 rounded-lg text-center text-sm col-span-2 md:col-span-1">
+                        <i class="fa fa-home mb-1"></i>
+                        <div>生活部</div>
+                    </div>
+                </div>
+                
+                <button id="start-btn" class="bg-primary hover:bg-primary/90 text-white font-medium py-3 px-8 rounded-full transition-all transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary/50">
+                    开始匹配
+                </button>
+            </div>
+            
+            <!-- 问题区域 -->
+            <div id="question-screen" class="hidden">
+                <h2 id="question-text" class="text-xl md:text-2xl font-bold mb-6"></h2>
+                <div id="options-container" class="space-y-3">
+                    <!-- 选项将通过JS动态生成 -->
+                </div>
+            </div>
+            
+            <!-- 结果区域 -->
+            <div id="result-screen" class="hidden">
+                <h2 class="text-2xl font-bold mb-6 text-center">你的最佳匹配部门</h2>
+                <div id="top-department" class="mb-8 p-6 rounded-2xl shadow-lg">
+                    <!-- 最匹配部门将在这里显示 -->
+                </div>
+                
+                <h3 class="text-xl font-bold mb-4">其他推荐部门</h3>
+                <div id="other-departments" class="space-y-4 mb-8">
+                    <!-- 其他推荐部门将在这里显示 -->
+                </div>
+                
+                <div class="mt-8 text-center space-y-4">
+                    <button id="join-btn" class="inline-block bg-accent hover:bg-accent/90 text-white font-medium py-3 px-8 rounded-full transition-all transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-accent/50">
+                        加入自动化工程系学生会
+                    </button>
+                    <button id="restart-btn" class="bg-neutral hover:bg-neutral/90 text-white font-medium py-3 px-8 rounded-full transition-all transform hover:scale-105 focus:outline-none">
+                        重新匹配
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 加入学生会区域 -->
+            <div id="join-screen" class="hidden">
+                <div class="text-center mb-8">
+                    <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 text-primary mb-4">
+                        <i class="fa fa-users text-2xl"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold mb-2">加入自动化工程系学生会</h2>
+                    <p class="text-gray-600">选择以下方式加入我们，开启你的学生会之旅</p>
+                </div>
+                
+                <!-- 加入方式按钮 -->
+                <div class="space-y-4">
+                    <!-- 加入QQ群 -->
+                    <a href="https://qm.qq.com/q/JedqI2oheS" target="_blank" class="block w-full bg-qq hover:bg-qq/90 text-white font-semibold py-4 px-6 rounded-xl btn-hover flex items-center justify-center gap-3">
+                        <i class="fa fa-qq text-xl"></i>
+                        <span>加入QQ群</span>
+                    </a>
+                    
+                    <!-- 加入微信群 -->
+                    <button onclick="document.getElementById('wechat-modal').classList.remove('hidden')" class="w-full bg-wechat hover:bg-wechat/90 text-white font-semibold py-4 px-6 rounded-xl btn-hover flex items-center justify-center gap-3">
+                        <i class="fa fa-weixin text-xl"></i>
+                        <span>加入微信群</span>
+                    </button>
+                    
+                    <!-- 加入学生会报名 -->
+                    <a href="https://www.wjx.cn/vm/eJinnty.aspx" target="_blank" class="block w-full bg-accent hover:bg-accent/90 text-white font-semibold py-4 px-6 rounded-xl btn-hover flex items-center justify-center gap-3">
+                        <i class="fa fa-file-text-o text-xl"></i>
+                        <span>填写报名表</span>
+                    </a>
+                </div>
+                
+                <!-- 部门招新说明 -->
+                <div class="mt-8 pt-6 border-t border-gray-100">
+                    <h3 class="font-semibold mb-3 text-gray-800">招新说明</h3>
+                    <ul class="text-sm text-gray-600 space-y-2">
+                        <li class="flex items-start">
+                            <i class="fa fa-info-circle text-primary mt-1 mr-2"></i>
+                            <span>招新对象：自动化工程系全体在读学生</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-info-circle text-primary mt-1 mr-2"></i>
+                            <span>报名截止日期：9月30日24:00</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-info-circle text-primary mt-1 mr-2"></i>
+                            <span>面试时间：9月23日-9月30日</span>
+                        </li>
+                    </ul>
+                </div>
+                
+                <!-- 返回按钮 -->
+                <div class="mt-8 text-center">
+                    <button id="back-to-result" class="inline-flex items-center text-gray-600 hover:text-primary transition-colors">
+                        <i class="fa fa-arrow-left mr-2"></i>
+                        <span>返回结果</span>
+                    </button>
+                </div>
+            </div>
+        </main>
+        
+        <!-- 部门介绍区域 -->
+        <section id="departments-info" class="hidden mb-8">
+            <h2 class="text-xl font-bold mb-6 text-center">各部门详细介绍</h2>
+            <div id="departments-container" class="grid md:grid-cols-2 gap-6">
+                <!-- 部门介绍将通过JS动态生成 -->
+            </div>
+        </section>
+        
+    
+    <!-- 微信群二维码模态框 -->
+    <div id="wechat-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 hidden z-50">
+        <div class="bg-white rounded-xl p-6 max-w-sm w-full text-center card-effect">
+            <h3 class="text-xl font-bold mb-4 text-gray-800">扫码加入微信群</h3>
+            <div class="flex justify-center mb-4 p-3 bg-gray-50 rounded-lg">
+                <img src="https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/000087b16b9c44ec97477bd9e32c7190.png~tplv-a9rns2rl98-24:720:720.png?rk3s=1fb89129&x-expires=1757519498&x-signature=8RPideuLVs9YchIGIudUVfCrfCs%3D" 
+                     alt="自动化工程系学生会微信群二维码" 
+                     class="rounded-lg max-w-[250px]">
+            </div>
+            <p class="text-gray-600 mb-6 text-sm">请使用微信扫描上方二维码加入招新群<br>群内将发布最新招新信息</p>
+            <button onclick="document.getElementById('wechat-modal').classList.add('hidden')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-6 rounded-lg transition-colors w-full">
+                关闭
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // 部门数据 - 基于提供的详细介绍
+        const departments = [
+            {
+                id: 'publicity',
+                name: '文宣部',
+                description: '主要负责系部各项活动的拍摄任务，以及活动的海报设计宣传，进行宣传，负责学生会各项活动的宣传报道工作。',
+                icon: 'fa-camera',
+                color: 'bg-publicity/10 text-publicity',
+                borderColor: 'border-publicity',
+                bgColor: 'bg-publicity/5'
+            },
+            {
+                id: 'external',
+                name: '外联部',
+                description: '负责对校外企业，同院校级别之间的活动交流与沟通,负责策划组织职业规划大赛简历大赛等活动,其次，配合其他部门参与工作，锻炼自己的社交与口才能力。',
+                icon: 'fa-handshake-o',
+                color: 'bg-external/10 text-external',
+                borderColor: 'border-external',
+                bgColor: 'bg-external/5'
+            },
+            {
+                id: 'academic',
+                name: '学习部',
+                description: '致力于营造良好的学习氛围，组织各类竞赛、讲座等活动，帮助同学们提高学习成绩和综合素质。如果你对学习有着浓厚的兴趣，并且乐于为同学们的学习提供帮助，学习部欢迎你的到来。',
+                features: [
+                    "【知识共享】：参与学术讲座、知识竞赛，与学长学姐面对面交流",
+                    "【技能提升】：加入活动策划、参与活动执行，丰富专业知识",
+                    "【团队协作】：在活动组织中锻炼团队合作能力，与伙伴共同成长"
+                ],
+                icon: 'fa-book',
+                color: 'bg-academic/10 text-academic',
+                borderColor: 'border-academic',
+                bgColor: 'bg-academic/5'
+            },
+            {
+                id: 'culture',
+                name: '文体部',
+                description: '以其独特的艺术气息而灼灼其华，开展丰富的文娱活动，为广大学生提供了展示个人才华和魅力的舞台，推动了校园文化艺术发展；同时也开展形式多样、内容丰富、吸引力强的群众性体育活动，以丰富广大学生的课余时间。',
+                features: "在文体部可以学到策划组织的基础知识以及活动举办的方方面面，不仅能学到新技能，还能提高沟通能力、合作组织能力及突发情况的应变能力。",
+                icon: 'fa-futbol-o',
+                color: 'bg-culture/10 text-culture',
+                borderColor: 'border-culture',
+                bgColor: 'bg-culture/5'
+            },
+            {
+                id: 'life',
+                name: '生活部',
+                description: '是学生会的一个重要部门，主要负责协助学校解释和疏导工作，及时反馈同学们对学校生活设施、食堂管理等意见和建议，传达学校在生活、后勤管理方面的规定和要求，并协助学校做好解释和疏导工作。',
+                features: [
+                    "每周进行一次查寝",
+                    "两周一次安全检查",
+                    "一个月一次晚查寝（思齐楼指定楼层）"
+                ],
+                icon: 'fa-home',
+                color: 'bg-life/10 text-life',
+                borderColor: 'border-life',
+                bgColor: 'bg-life/5'
+            }
+        ];
+        
+        // 优化后的问题 - 更贴近部门实际工作内容
+        const questions = [
+            {
+                text: '在以下工作内容中，你最感兴趣的是？',
+                options: [
+                    { text: '设计活动海报、拍摄活动照片视频', points: { publicity: 3 } },
+                    { text: '与企业洽谈合作、组织竞赛活动', points: { external: 3 } },
+                    { text: '策划学术讲座、组织学习竞赛', points: { academic: 3 } },
+                    { text: '编排文艺节目、组织体育赛事', points: { culture: 3 } },
+                    { text: '收集同学生活意见、检查宿舍安全', points: { life: 3 } }
+                ]
+            },
+            {
+                text: '你希望通过学生会工作提升哪些能力？',
+                options: [
+                    { text: '设计能力、审美水平、摄影技巧', points: { publicity: 3 } },
+                    { text: '社交能力、谈判技巧、活动策划', points: { external: 3 } },
+                    { text: '知识储备、逻辑思维、组织能力', points: { academic: 3 } },
+                    { text: '活动组织、团队协作、应变能力', points: { culture: 3 } },
+                    { text: '沟通协调、问题解决、服务意识', points: { life: 3 } }
+                ]
+            },
+            {
+                text: '哪种工作环境更适合你？',
+                options: [
+                    { text: '灵活自由，能发挥创意的环境', points: { publicity: 3 } },
+                    { text: '需要经常与人打交道的环境', points: { external: 3 } },
+                    { text: '学习氛围浓厚，有知识交流的环境', points: { academic: 3 } },
+                    { text: '充满活力，需要组织大型活动的环境', points: { culture: 3 } },
+                    { text: '需要细心耐心，为同学服务的环境', points: { life: 3 } }
+                ]
+            },
+            {
+                text: '你更擅长处理哪种类型的任务？',
+                options: [
+                    { text: '视觉设计、内容创作类任务', points: { publicity: 3 } },
+                    { text: '对外联络、资源整合类任务', points: { external: 3 } },
+                    { text: '知识传递、学术组织类任务', points: { academic: 3 } },
+                    { text: '活动策划、现场执行类任务', points: { culture: 3 } },
+                    { text: '日常管理、问题协调类任务', points: { life: 3 } }
+                ]
+            },
+            {
+                text: '你对学生会哪个方面的工作最有热情？',
+                options: [
+                    { text: '通过视觉设计展现学生会风貌', points: { publicity: 3 } },
+                    { text: '为学生会争取外部资源和合作', points: { external: 3 } },
+                    { text: '帮助同学们提升学习能力和成绩', points: { academic: 3 } },
+                    { text: '通过文体活动丰富校园生活', points: { culture: 3 } },
+                    { text: '改善同学们的校园生活环境', points: { life: 3 } }
+                ]
+            },
+            {
+                text: '在团队中，你更倾向于扮演什么角色？',
+                options: [
+                    { text: '创意提供者，负责视觉呈现', points: { publicity: 3 } },
+                    { text: '对外代表，负责沟通协调', points: { external: 3 } },
+                    { text: '知识专家，负责内容策划', points: { academic: 3 } },
+                    { text: '活动组织者，负责流程执行', points: { culture: 3 } },
+                    { text: '后勤保障者，负责细节落实', points: { life: 3 } }
+                ]
+            },
+            {
+                text: '哪种类型的活动让你更有参与感？',
+                options: [
+                    { text: '海报设计比赛、摄影展', points: { publicity: 3 } },
+                    { text: '企业宣讲会、校际交流活动', points: { external: 3 } },
+                    { text: '学术讲座、知识竞赛', points: { academic: 3 } },
+                    { text: '文艺晚会、运动会', points: { culture: 3 } },
+                    { text: '宿舍文化节、生活权益活动', points: { life: 3 } }
+                ]
+            },
+            {
+                text: '你认为自己最突出的优势是？',
+                options: [
+                    { text: '审美能力强，有创意', points: { publicity: 3 } },
+                    { text: '口才好，擅长与人沟通', points: { external: 3 } },
+                    { text: '学习能力强，知识储备丰富', points: { academic: 3 } },
+                    { text: '组织能力强，富有活力', points: { culture: 3 } },
+                    { text: '耐心细致，有服务精神', points: { life: 3 } }
+                ]
+            },
+            {
+                text: '你希望在学生会获得什么？',
+                options: [
+                    { text: '提升设计和宣传技能', points: { publicity: 3 } },
+                    { text: '拓展人脉，提升社交能力', points: { external: 3 } },
+                    { text: '深化专业知识，提升学术水平', points: { academic: 3 } },
+                    { text: '锻炼活动组织能力，展现才艺', points: { culture: 3 } },
+                    { text: '为同学服务，改善校园生活', points: { life: 3 } }
+                ]
+            },
+            {
+                text: '以下哪种工作节奏更适合你？',
+                options: [
+                    { text: '活动前集中创作，平时较灵活', points: { publicity: 3 } },
+                    { text: '需要经常外出，时间不固定', points: { external: 3 } },
+                    { text: '有规律的学术活动安排', points: { academic: 3 } },
+                    { text: '活动期间忙碌，需要应对突发情况', points: { culture: 3 } },
+                    { text: '规律性的日常工作，按计划进行', points: { life: 3 } }
+                ]
+            }
+        ];
+        
+        // 全局变量
+        let currentQuestionIndex = 0;
+        let scores = {};
+        
+        // 初始化分数
+        function initScores() {
+            departments.forEach(dept => {
+                scores[dept.id] = 0;
+            });
+        }
+        
+        // 更新进度条
+        function updateProgress() {
+            const progress = ((currentQuestionIndex / questions.length) * 100);
+            document.getElementById('progress-bar').style.width = `${progress}%`;
+            document.getElementById('progress-text').textContent = `${currentQuestionIndex}/${questions.length}`;
+        }
+        
+        // 显示当前问题
+        function showCurrentQuestion() {
+            if (currentQuestionIndex >= questions.length) {
+                showResults();
+                return;
+            }
+            
+            // 添加问题切换动画
+            const questionScreen = document.getElementById('question-screen');
+            questionScreen.style.opacity = '0';
+            
+            setTimeout(() => {
+                const question = questions[currentQuestionIndex];
+                const questionText = document.getElementById('question-text');
+                const optionsContainer = document.getElementById('options-container');
+                
+                questionText.textContent = question.text;
+                optionsContainer.innerHTML = '';
+                
+                question.options.forEach((option, index) => {
+                    const optionBtn = document.createElement('button');
+                    optionBtn.className = `w-full text-left p-4 border border-gray-200 rounded-lg hover:bg-light transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50 option-hover`;
+                    optionBtn.innerHTML = `
+                        <div class="flex items-center">
+                            <span class="mr-3 w-6 h-6 rounded-full border border-gray-300 flex items-center justify-center">${index + 1}</span>
+                            <span>${option.text}</span>
+                        </div>
+                    `;
+                    
+                    optionBtn.addEventListener('click', () => {
+                        // 记录分数
+                        Object.keys(option.points).forEach(key => {
+                            scores[key] += option.points[key];
+                        });
+                        
+                        // 下一题
+                        currentQuestionIndex++;
+                        updateProgress();
+                        showCurrentQuestion();
+                    });
+                    
+                    optionsContainer.appendChild(optionBtn);
+                });
+                
+                questionScreen.style.opacity = '1';
+            }, 300);
+        }
+        
+        // 显示结果
+        function showResults() {
+            // 隐藏问题屏幕，显示结果屏幕
+            document.getElementById('question-screen').classList.add('hidden');
+            document.getElementById('result-screen').classList.remove('hidden');
+            document.getElementById('departments-info').classList.remove('hidden');
+            
+            // 排序部门分数
+            const sortedDepartments = [...departments].sort((a, b) => {
+                return scores[b.id] - scores[a.id];
+            });
+            
+            // 计算最高匹配度
+            const maxScore = scores[sortedDepartments[0].id];
+            const maxPossibleScore = questions.length * 3;
+            const topMatchPercentage = Math.round((maxScore / maxPossibleScore) * 100);
+            
+            // 显示最匹配部门
+            const topDepartment = sortedDepartments[0];
+            const topDepartmentContainer = document.getElementById('top-department');
+            
+            // 根据匹配度设置边框样式
+            let borderClass = topMatchPercentage >= 80 ? 'border-4' : topMatchPercentage >= 60 ? 'border-2' : 'border';
+            
+            topDepartmentContainer.className = `${topDepartment.bgColor} ${borderClass} ${topDepartment.borderColor} rounded-2xl p-6 shadow-lg`;
+            topDepartmentContainer.innerHTML = `
+                <div class="flex flex-col md:flex-row items-center">
+                    <div class="${topDepartment.color} p-4 rounded-full mr-0 md:mr-6 mb-4 md:mb-0">
+                        <i class="fa ${topDepartment.icon} text-3xl"></i>
+                    </div>
+                    <div class="text-center md:text-left">
+                        <div class="flex flex-col md:flex-row items-center md:items-start gap-3 mb-2">
+                            <h3 class="font-bold text-2xl">${topDepartment.name}</h3>
+                            <span class="px-4 py-1 ${topDepartment.color} rounded-full text-sm font-medium">
+                                匹配度 ${topMatchPercentage}%
+                            </span>
+                        </div>
+                        <p class="text-neutral mb-4">${topDepartment.description}</p>
+                        
+                        ${topDepartment.features ? `
+                            <div class="text-sm text-gray-600 mt-3">
+                                <div class="font-medium mb-2">部门特色：</div>
+                                ${Array.isArray(topDepartment.features) ? 
+                                    topDepartment.features.map(feature => `<div class="flex items-start mt-1"><i class="fa fa-check-circle ${topDepartment.color.split(' ')[1]} mt-1 mr-2"></i><span>${feature}</span></div>`).join('') : 
+                                    `<div class="flex items-start mt-1"><i class="fa fa-info-circle ${topDepartment.color.split(' ')[1]} mt-1 mr-2"></i><span>${topDepartment.features}</span></div>`
+                                }
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+            
+            // 显示其他推荐部门
+            const otherDepartmentsContainer = document.getElementById('other-departments');
+            otherDepartmentsContainer.innerHTML = '';
+            
+            for (let i = 1; i < 3 && i < sortedDepartments.length; i++) {
+                const dept = sortedDepartments[i];
+                const matchPercentage = Math.round((scores[dept.id] / maxPossibleScore) * 100);
+                
+                const deptCard = document.createElement('div');
+                deptCard.className = `${dept.bgColor} border ${dept.borderColor} rounded-xl p-4 transition-all hover:shadow-md`;
+                
+                deptCard.innerHTML = `
+                    <div class="flex items-start">
+                        <div class="${dept.color} p-3 rounded-full mr-4">
+                            <i class="fa ${dept.icon} text-xl"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex justify-between items-center mb-1">
+                                <h3 class="font-bold text-lg">${i + 1}. ${dept.name}</h3>
+                                <span class="text-sm px-3 py-1 ${dept.color} rounded-full">匹配度 ${matchPercentage}%</span>
+                            </div>
+                            <p class="text-neutral text-sm">${dept.description.substring(0, 80)}${dept.description.length > 80 ? '...' : ''}</p>
+                        </div>
+                    </div>
+                `;
+                
+                otherDepartmentsContainer.appendChild(deptCard);
+            }
+            
+            // 生成部门介绍
+            const departmentsContainer = document.getElementById('departments-container');
+            departmentsContainer.innerHTML = '';
+            
+            departments.forEach(dept => {
+                const deptCard = document.createElement('div');
+                deptCard.className = `${dept.bgColor} border border-gray-100 rounded-xl p-5 transition-all hover:shadow-md`;
+                
+                let featuresHtml = '';
+                if (dept.features) {
+                    featuresHtml = `<div class="mt-3 text-sm text-gray-600">`;
+                    if (Array.isArray(dept.features)) {
+                        featuresHtml += `<div class="font-medium mb-2">部门特色：</div>`;
+                        dept.features.forEach(feature => {
+                            featuresHtml += `<div class="flex items-start mt-1"><i class="fa fa-angle-right ${dept.color.split(' ')[1]} mt-1 mr-2"></i><span>${feature}</span></div>`;
+                        });
+                    } else {
+                        featuresHtml += `<div class="flex items-start mt-1"><i class="fa fa-angle-right ${dept.color.split(' ')[1]} mt-1 mr-2"></i><span>${dept.features}</span></div>`;
+                    }
+                    featuresHtml += `</div>`;
+                }
+                
+                deptCard.innerHTML = `
+                    <div class="flex items-center mb-3">
+                        <div class="${dept.color} p-2 rounded-full mr-3">
+                            <i class="fa ${dept.icon}"></i>
+                        </div>
+                        <h3 class="font-bold text-lg">${dept.name}</h3>
+                    </div>
+                    <p class="text-neutral text-sm">${dept.description}</p>
+                    ${featuresHtml}
+                `;
+                
+                departmentsContainer.appendChild(deptCard);
+            });
+        }
+        
+        // 重新开始测试
+        function restartTest() {
+            currentQuestionIndex = 0;
+            initScores();
+            updateProgress();
+            
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('result-screen').classList.add('hidden');
+            document.getElementById('join-screen').classList.add('hidden');
+            document.getElementById('departments-info').classList.add('hidden');
+            document.getElementById('question-screen').classList.remove('hidden');
+            
+            showCurrentQuestion();
+        }
+        
+        // 显示加入页面
+        function showJoinScreen() {
+            document.getElementById('result-screen').classList.add('hidden');
+            document.getElementById('join-screen').classList.remove('hidden');
+            document.getElementById('departments-info').classList.add('hidden');
+        }
+        
+        // 返回结果页面
+        function backToResult() {
+            document.getElementById('join-screen').classList.add('hidden');
+            document.getElementById('result-screen').classList.remove('hidden');
+            document.getElementById('departments-info').classList.remove('hidden');
+        }
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            initScores();
+            updateProgress();
+            
+            // 开始按钮事件
+            document.getElementById('start-btn').addEventListener('click', () => {
+                document.getElementById('start-screen').classList.add('hidden');
+                document.getElementById('question-screen').classList.remove('hidden');
+                // 设置初始不透明度为0，为动画做准备
+                document.getElementById('question-screen').style.opacity = '0';
+                // 触发重排后设置为1，启动淡入动画
+                setTimeout(() => {
+                    document.getElementById('question-screen').style.opacity = '1';
+                }, 10);
+                showCurrentQuestion();
+            });
+            
+            // 重新开始按钮事件
+            document.getElementById('restart-btn').addEventListener('click', restartTest);
+            
+            // 加入学生会按钮事件
+            document.getElementById('join-btn').addEventListener('click', showJoinScreen);
+            
+            // 返回结果按钮事件
+            document.getElementById('back-to-result').addEventListener('click', backToResult);
+        });
+    </script>
+</body>
+</html>
